@@ -7,15 +7,23 @@ from utils.search import LeafSearch
 from utils.database import LeafDatabaseSQL 
 
 def query_leaf(image):
-    # Tiền xử lý và trích đặc trưng
-    processed = preprocess_leaf_image(image)
-    feature = extract_leaf_features(processed)
-
     # Truy xuất ảnh tương đồng
     db = LeafDatabaseSQL()
-    db.load_all_features(is_query=False)
-    retrieval = LeafSearch(db)
-    results = retrieval.search_with_feature_vector(feature, top_n=3)
+    db.process_and_insert_image(image, label="query", is_query=True)
+
+    # Load dataset
+    db_dataset = LeafDatabaseSQL()
+    db_dataset.load_all_features(is_query=False)
+
+    # Load query
+    db_query = LeafDatabaseSQL()
+    db_query.load_all_features(is_query=True)
+
+    query_feature = db_query.features[-1]
+
+    # Truy xuất
+    search = LeafSearch(db_dataset)
+    results = search.search_with_feature_vector(query_feature, top_n=3)
     db.close()
 
     outputs = []
